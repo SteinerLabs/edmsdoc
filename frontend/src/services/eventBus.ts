@@ -28,10 +28,38 @@ class EventBus {
 export const eventBus = new EventBus();
 export type { EventPayload, EventCallback };
 
-setInterval(() => eventBus.emit('e1-2', {
-  label: 'UserCreated',
-  duration: 2200,
-  fill: '#e6f7ff',
-  stroke: '#1890ff',
-  rotate: '0', // keep text upright if desired
-}), 1000);
+setInterval(
+  () =>
+    eventBus.emit('e1-2', {
+      label: 'UserCreated',
+      duration: 2000,
+      fill: '#e6f7ff',
+      stroke: '#1890ff',
+      rotate: '0' // keep text upright if desired
+    }),
+  1000
+);
+
+setInterval(
+  () =>
+    eventBus.emit('e2-3', {
+      label: 'TestEvent',
+      duration: 2000,
+      fill: '#e6f7ff',
+      stroke: '#1890ff',
+      rotate: '0' // keep text upright if desired
+    }),
+  3000
+);
+
+setInterval(
+  () =>
+    eventBus.emit('e1-3', {
+      label: 'TestEvent',
+      duration: 2000,
+      fill: '#e6f7ff',
+      stroke: '#1890ff',
+      rotate: '0' // keep text upright if desired
+    }),
+  2000
+);

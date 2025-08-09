@@ -13,82 +13,90 @@ interface ParticleState {
 }
 
 type EdgeData = {
-  eventName?: string; // default if payload omits label
+  eventName?: string; // default label if payload omits it
 };
 
 export function AnimatedEdge({
-                               id,
-                               sourceX,
-                               sourceY,
-                               targetX,
-                               targetY,
-                               sourcePosition,
-                               targetPosition,
-                               markerEnd,
-                               data,
-                             }: EdgeProps<EdgeData>) {
+  id,
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
+  sourcePosition,
+  targetPosition,
+  markerEnd,
+  data
+}: EdgeProps<EdgeData>) {
   const [edgePath] = getSmoothStepPath({
     sourceX,
     sourceY,
     sourcePosition,
     targetX,
     targetY,
-    targetPosition,
+    targetPosition
   });
 
+  // Keep the <path> stable and share it with all tokens.
   const pathRef = useRef<SVGPathElement | null>(null);
+
+  // Store all currently animating tokens for this edge.
   const [particles, setParticles] = useState<ParticleState[]>([]);
 
+  // Helper to remove a particle when it completes.
+  const removeParticle = (particleId: string) => {
+    setParticles((prev) => prev.filter((p) => p.id !== particleId));
+  };
+
   useEffect(() => {
-    const handler = (edgeId: string, payload?: EventPayload) => {
+    const onEvent = (edgeId: string, payload?: EventPayload) => {
       if (edgeId !== id) return;
 
-      const duration = payload?.duration ?? 1200;
-      const label = payload?.label ?? data?.eventName ?? 'Event';
+      const duration = Math.max(1, payload?.duration ?? 1200);
+      const label = String(payload?.label ?? data?.eventName ?? 'Event');
 
-      setParticles((prev) => [
-        ...prev,
-        {
-          id: Math.random().toString(36).slice(2),
-          duration,
-          label,
-          fill: payload?.fill,
-          stroke: payload?.stroke,
-          rotate: payload?.rotate,
-        },
-      ]);
+      const p: ParticleState = {
+        id:
+          typeof crypto !== 'undefined' && 'randomUUID' in crypto
+            ? crypto.randomUUID()
+            : `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        duration,
+        label,
+        fill: payload?.fill,
+        stroke: payload?.stroke,
+        rotate: payload?.rotate ?? 'auto'
+      };
+
+      // Append new particle; do not replace existing ones.
+      setParticles((prev) => [...prev, p]);
     };
 
-    eventBus.on(handler);
-    return () => eventBus.off(handler);
+    eventBus.on(onEvent);
+    return () => eventBus.off(onEvent);
   }, [id, data?.eventName]);
 
   return (
-      <g className="react-flow__edge">
-        <path
-            ref={pathRef}
-            id={id}
-            d={edgePath}
-            stroke="#222"
-            strokeWidth={2}
-            fill="none"
-            markerEnd={markerEnd}
-        />
+    <>
+      <path
+        ref={pathRef}
+        d={edgePath}
+        fill="none"
+        stroke="#222"
+        strokeWidth={1.5}
+        markerEnd={markerEnd}
+      />
 
-        {particles.map((p) => (
-            <EventToken
-                key={p.id}
-                pathRef={pathRef}
-                label={p.label}
-                duration={p.duration}
-                rotate={p.rotate ?? 'auto'}
-                fill={p.fill ?? '#fff'}
-                stroke={p.stroke ?? '#222'}
-                onDone={() =>
-                    setParticles((prev) => prev.filter((x) => x.id !== p.id))
-                }
-            />
-        ))}
-      </g>
+      {particles.map((p) => (
+        <EventToken
+          key={p.id}
+          pathRef={pathRef}
+          label={p.label}
+          duration={p.duration}
+          onDone={() => removeParticle(p.id)}
+          fill={p.fill}
+          stroke={p.stroke}
+          rotate={p.rotate}
+        />
+      ))}
+    </>
   );
 }

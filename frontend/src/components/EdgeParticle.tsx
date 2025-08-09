@@ -1,4 +1,4 @@
-import { useEffect, useRef, type RefObject } from 'react';
+import { type RefObject, useEffect, useRef } from 'react';
 
 interface EdgeParticleProps {
   pathRef: RefObject<SVGPathElement | null>;
@@ -21,7 +21,7 @@ export function EdgeParticle({ pathRef, duration, onDone }: EdgeParticleProps) {
         const pathLength = pathRef.current.getTotalLength();
         const point = pathRef.current.getPointAtLength(pathLength * t);
         circleRef.current.setAttribute('cx', String(point.x));
-          circleRef.current.setAttribute('cy', String(point.y));
+        circleRef.current.setAttribute('cy', String(point.y));
       }
 
       if (t < 1) {
